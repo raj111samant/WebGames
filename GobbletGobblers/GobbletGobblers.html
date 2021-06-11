@@ -4,30 +4,30 @@
     <meta charset="utf-8">
     <title>Gobblet Gobblers</title>
     <style>
-	    button.redButton{background-color:Salmon;}
-	    button.blueButton{background-color:SkyBlue;}
-    </style>	
+        button.redButton{background-color:Salmon;}
+        button.blueButton{background-color:SkyBlue;}
+    </style>    
 </head>
 <body>
 
     <div>
     <button type="button" id="redButton1" class="redButton" count=2>A x 2</button>
-	&nbsp;&nbsp;&nbsp;
-	<button type="button" id="redButton2" class="redButton" count=2>B x 2</button>
-	&nbsp;&nbsp;&nbsp;
-	<button type="button" id="redButton3" class="redButton" count=2>C x 2</button>
-	&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="redButton2" class="redButton" count=2>B x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="redButton3" class="redButton" count=2>C x 2</button>
+    &nbsp;&nbsp;&nbsp;
     </div>
     <br>
     <br>
     <br>
     <div>
     <button type="button" id="blueButton1" class="blueButton" count=2>A x 2</button>
-	&nbsp;&nbsp;&nbsp;
-	<button type="button" id="blueButton2" class="blueButton" count=2>B x 2</button>
-	&nbsp;&nbsp;&nbsp;
-	<button type="button" id="blueButton3" class="blueButton" count=2>C x 2</button>
-	&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="blueButton2" class="blueButton" count=2>B x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="blueButton3" class="blueButton" count=2>C x 2</button>
+    &nbsp;&nbsp;&nbsp;
     </div>
     <hr>
     <div id="debugText">
@@ -35,15 +35,16 @@
     </div>
 </body>
     <script>
-		var MyTurn = true;
-		function PrintLog(str) {
-			document.getElementById('debugText').innerHTML = "Debug : " + str;
-			console.log(str);
-			setTimeout(function(){
-				document.getElementById('debugText').innerHTML = ""
-				}, 2000);
-		}
-		
+        var MyTurn = true;
+		var MySelection = null;
+        function PrintLog(str) {
+            document.getElementById('debugText').innerHTML = "Debug : " + str;
+            console.log(str);
+            setTimeout(function(){
+                document.getElementById('debugText').innerHTML = ""
+                }, 3000);
+        }
+        
         //var redButton1 = document.getElementById('redButton1');
         //var redButton2 = document.getElementById('redButton2');
         //var redButton3 = document.getElementById('redButton3');
@@ -51,30 +52,90 @@
         //var blueButton1 = document.getElementById('blueButton1');
         //var blueButton2 = document.getElementById('blueButton2');
         //var blueButton3 = document.getElementById('blueButton3');
+		
+		function ValidateFirstButtonSelection(targetObject) {
+			MySelection = new Object();
+			MySelection.selectionType = "BUTTON";
+			MySelection.selectionColor = targetObject.getAttribute("class");
+			MySelection.selectionValue = targetObject.innerHTML.split(" ")[0];
+			console.log(MySelection);
+			return true;
+		}
+		
+		function ValidateFirstTableSelection(targetObject) {
+			return true;
+		}
+		
+		function ValidateFirstSelection(targetObject) {
+			if (targetObject.tagName == "BUTTON") {
+				return ValidateFirstButtonSelection(targetObject);
+			} else {
+				return ValidateFirstTableSelection(targetObject);
+			}
+			PrintLog("ERROR : Something in ValidateFirstSelection() went wrong");
+			return false;
+		}
+		
+		function ValidateSecondButtonSelection(targetObject) {
+			PrintLog("WARN : Second selection cannot be button");
+			return false;
+		}
+		
+		function ValidateSecondTableSelection(targetObject) {
+			return true;
+		}
+		
+		function ValidateSecondSelection(targetObject) {
+			if (targetObject.tagName == "BUTTON") {
+				return ValidateSecondButtonSelection(targetObject);
+			} else {
+				return ValidateSecondTableSelection(targetObject);
+			}
+			PrintLog("ERROR : Something in ValidateSecondSelection() went wrong");
+			return false;
+		}
+		
+		function ValidateMove(targetObject) {
+			// Not your turn
+			if (MyTurn == false) {
+				PrintLog("WARN : Not your turn");
+				return false;
+			}
+			
+			if (MySelection == null) {
+				return ValidateFirstSelection(targetObject);
+			} else {
+				return ValidateSecondSelection(targetObject);
+			}
+			PrintLog("ERROR : Something in ValidateMove() went wrong");
+			return false;
+		}
 
         function ButtonClick(eventObject) {
-			if (MyTurn == false) {
-			    PrintLog("Not Your turn");
-			}
-		    var targetObject = eventObject.target || eventObject.srcElement;
-			var count = targetObject.getAttribute("count");
-			var innerHTMLArray = targetObject.innerHTML.split(" ");
-			count--;
-			targetObject.setAttribute("count", count);
-			targetObject.innerHTML = innerHTMLArray[0] + " x " + count;
-			if (count == 0) {
-			    targetObject.disabled = true;
-			}
-			PrintLog("count is now " + count);
+			var targetObject = eventObject.target || eventObject.srcElement;
+			var isMoveValid = ValidateMove(targetObject);
+            if (isMoveValid == false) {
+                return;
+            }
+            
+            var count = targetObject.getAttribute("count");
+            var innerHTMLArray = targetObject.innerHTML.split(" ");
+            count--;
+            targetObject.setAttribute("count", count);
+            targetObject.innerHTML = innerHTMLArray[0] + " x " + count;
+            if (count == 0) {
+                targetObject.disabled = true;
+            }
+            PrintLog("Info : count is now " + count);
         }
-		
+        
         redButton1.addEventListener('click', ButtonClick);
-		redButton2.addEventListener('click', ButtonClick);
-		redButton3.addEventListener('click', ButtonClick);
-		
-		blueButton1.addEventListener('click', ButtonClick);
-		blueButton2.addEventListener('click', ButtonClick);
-		blueButton3.addEventListener('click', ButtonClick);
+        redButton2.addEventListener('click', ButtonClick);
+        redButton3.addEventListener('click', ButtonClick);
+        
+        blueButton1.addEventListener('click', ButtonClick);
+        blueButton2.addEventListener('click', ButtonClick);
+        blueButton3.addEventListener('click', ButtonClick);
 
     </script>
 </html>
