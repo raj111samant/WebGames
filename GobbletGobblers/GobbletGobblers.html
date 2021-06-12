@@ -4,29 +4,58 @@
     <meta charset="utf-8">
     <title>Gobblet Gobblers</title>
     <style>
+		html, body {height:100%}
         button.redButton{background-color:Salmon;}
         button.blueButton{background-color:SkyBlue;}
+		button.playButton{height:100%; width:30%;font-size:40px}
+		button.playButton:hover{cursor:pointer;}
+		td.playTD{width:10%;height:10%;font-size:40px}
+		td.playTD:hover{cursor:pointer;}
+		tr {width:10%;height:10%;}
+		div.centerDiv{text-align:center;height:10%;}
+		div.centerDivTable{text-align:center;height:50%;}
+		table.centerTable{margin-left:auto;margin-right:auto;width:80%;height:100%;}
+
     </style>    
 </head>
 <body>
 
-    <div>
-    <button type="button" id="redButton1" class="redButton" count=2>A x 2</button>
+    <div class="centerDiv">
+    <button type="button" id="redButton1" class="redButton playButton" gameValue="R_A,R_A">A x 2</button>
     &nbsp;&nbsp;&nbsp;
-    <button type="button" id="redButton2" class="redButton" count=2>B x 2</button>
+    <button type="button" id="redButton2" class="redButton playButton" gameValue="R_B,R_B">B x 2</button>
     &nbsp;&nbsp;&nbsp;
-    <button type="button" id="redButton3" class="redButton" count=2>C x 2</button>
+    <button type="button" id="redButton3" class="redButton playButton" gameValue="R_C,R_C">C x 2</button>
     &nbsp;&nbsp;&nbsp;
     </div>
     <br>
-    <br>
-    <br>
-    <div>
-    <button type="button" id="blueButton1" class="blueButton" count=2>A x 2</button>
+	<div class="centerDivTable">
+	<table border = "1" class="centerTable">
+		<tr>
+			<td class="playTD" gameValue=""></td>
+			<td class="playTD" gameValue=""></td>
+			<td class="playTD" gameValue=""></td>
+		</tr>
+		<tr>
+			<td class="playTD" gameValue=""></td>
+			<td class="playTD" gameValue=""></td>
+			<td class="playTD" gameValue=""></td>
+		</tr>
+		<tr>
+			<td class="playTD" gameValue=""></td>
+			<td class="playTD" gameValue=""></td>
+			<td class="playTD" gameValue=""></td>
+		</tr>
+		
+	</table>
+	</div>
+	<br>
+    <div  class="centerDiv">
+    <button type="button" id="blueButton1" class="blueButton playButton" gameValue="B_A,B_A">A x 2</button>
     &nbsp;&nbsp;&nbsp;
-    <button type="button" id="blueButton2" class="blueButton" count=2>B x 2</button>
+    <button type="button" id="blueButton2" class="blueButton playButton" gameValue="B_B,B_B">B x 2</button>
     &nbsp;&nbsp;&nbsp;
-    <button type="button" id="blueButton3" class="blueButton" count=2>C x 2</button>
+    <button type="button" id="blueButton3" class="blueButton playButton" gameValue="B_C,B_C">C x 2</button>
     &nbsp;&nbsp;&nbsp;
     </div>
     <hr>
@@ -44,98 +73,161 @@
                 document.getElementById('debugText').innerHTML = ""
                 }, 3000);
         }
-        
-        //var redButton1 = document.getElementById('redButton1');
-        //var redButton2 = document.getElementById('redButton2');
-        //var redButton3 = document.getElementById('redButton3');
 
-        //var blueButton1 = document.getElementById('blueButton1');
-        //var blueButton2 = document.getElementById('blueButton2');
-        //var blueButton3 = document.getElementById('blueButton3');
-		
-		function ValidateFirstButtonSelection(targetObject) {
-			MySelection = new Object();
-			MySelection.selectionType = "BUTTON";
-			MySelection.selectionColor = targetObject.getAttribute("class");
-			MySelection.selectionValue = targetObject.innerHTML.split(" ")[0];
-			console.log(MySelection);
-			return true;
-		}
-		
-		function ValidateFirstTableSelection(targetObject) {
-			return true;
-		}
-		
-		function ValidateFirstSelection(targetObject) {
-			if (targetObject.tagName == "BUTTON") {
-				return ValidateFirstButtonSelection(targetObject);
-			} else {
-				return ValidateFirstTableSelection(targetObject);
+		function CheckForGameEnd() {
+			var statusMatrix = new Array(3); // create an empty array of length n
+			for (var i=0;i<3;i++) {
+				statusMatrix[i] = new Array(3); // make each element an array
 			}
-			PrintLog("ERROR : Something in ValidateFirstSelection() went wrong");
-			return false;
-		}
-		
-		function ValidateSecondButtonSelection(targetObject) {
-			PrintLog("WARN : Second selection cannot be button");
-			return false;
-		}
-		
-		function ValidateSecondTableSelection(targetObject) {
-			return true;
-		}
-		
-		function ValidateSecondSelection(targetObject) {
-			if (targetObject.tagName == "BUTTON") {
-				return ValidateSecondButtonSelection(targetObject);
-			} else {
-				return ValidateSecondTableSelection(targetObject);
-			}
-			PrintLog("ERROR : Something in ValidateSecondSelection() went wrong");
-			return false;
-		}
-		
-		function ValidateMove(targetObject) {
-			// Not your turn
-			if (MyTurn == false) {
-				PrintLog("WARN : Not your turn");
-				return false;
+			var playCellElementList = document.getElementsByClassName("playTD");
+			for (var i=0; i<playCellElementList.length; i++) {
+				playCellElementList[i].addEventListener('click', CellClick);
 			}
 			
-			if (MySelection == null) {
-				return ValidateFirstSelection(targetObject);
-			} else {
-				return ValidateSecondSelection(targetObject);
+			var k=0;
+			var gameValue;
+			var gameValueList;
+			var gameValueParamList;
+			for (var i=0; i<3; i++) {
+				for (var j=0; j<3; j++) {
+					gameValue = playCellElementList[k].getAttribute("gameValue");
+					gameValueList = gameValue.split(",");
+					gameValueParamList = gameValueList[gameValueList.length-1].split("_");
+					statusMatrix[i][j] = gameValueParamList[0];
+					k++;
+				}
 			}
-			PrintLog("ERROR : Something in ValidateMove() went wrong");
-			return false;
+			
+			
+			console.log(statusMatrix)
+			for (var i=0;i<3;i++) {
+				
+				if ((statusMatrix[0][i] != "") && (statusMatrix[0][i] == statusMatrix[1][i]) && (statusMatrix[1][i] == statusMatrix[2][i])) {
+				    PrintLog("INFO: " + i + " col match");
+					return statusMatrix[0][i];
+				}
+				if ((statusMatrix[i][0] != "") && (statusMatrix[i][0] == statusMatrix[i][1]) && (statusMatrix[i][1] == statusMatrix[i][2])) {
+					PrintLog("INFO: " + i + " row match");
+					return statusMatrix[i][0];
+				}
+			}
+			if ((statusMatrix[1][1] != "") && (statusMatrix[0][0] == statusMatrix[1][1]) && (statusMatrix[1][1] == statusMatrix[2][2])) {
+				PrintLog("INFO: diagonal match");
+				return statusMatrix[0][0];
+			}
+
+			if ((statusMatrix[1][1] != "") && (statusMatrix[2][0] == statusMatrix[1][1]) && (statusMatrix[1][1] == statusMatrix[0][2])) {
+				PrintLog("INFO: Non diagonal match");
+				return statusMatrix[2][0];
+			}
+			
+			return "";
 		}
 
         function ButtonClick(eventObject) {
 			var targetObject = eventObject.target || eventObject.srcElement;
-			var isMoveValid = ValidateMove(targetObject);
-            if (isMoveValid == false) {
-                return;
-            }
+			var gameValue = targetObject.getAttribute("gameValue");
+			var gameValueList = gameValue.split(",");
+
+			if (MySelection == null) {
+				// This is 1st selection
+				if (gameValueList.length == 0) {
+					// There is no value left
+					PrintLog("WARN : Move not valid");
+					return;
+				}
+			} else {
+				// This is 2nd selection
+				PrintLog("WARN : Second selection cannot be button, Move not valid");
+				return;
+			}
             
-            var count = targetObject.getAttribute("count");
-            var innerHTMLArray = targetObject.innerHTML.split(" ");
-            count--;
-            targetObject.setAttribute("count", count);
-            targetObject.innerHTML = innerHTMLArray[0] + " x " + count;
-            if (count == 0) {
-                targetObject.disabled = true;
-            }
-            PrintLog("Info : count is now " + count);
+			MySelection = gameValueList.pop();
+            var color = MySelection.split("_")[0];
+			var value = MySelection.split("_")[1];
+			gameValue = gameValueList.join(",");
+            targetObject.setAttribute("gameValue", gameValue);
+            targetObject.innerHTML = value + " x " + gameValueList.length;
+            targetObject.disabled = gameValueList.length == 0;
+            //PrintLog("Info : gameValue for button is now " + gameValue);
         }
-        
-        redButton1.addEventListener('click', ButtonClick);
-        redButton2.addEventListener('click', ButtonClick);
-        redButton3.addEventListener('click', ButtonClick);
-        
-        blueButton1.addEventListener('click', ButtonClick);
-        blueButton2.addEventListener('click', ButtonClick);
-        blueButton3.addEventListener('click', ButtonClick);
+
+		function MakeFirstCellMove(targetObject) {
+			var gameValue = targetObject.getAttribute("gameValue");
+			var gameValueList = gameValue.split(",");
+			MySelection = gameValueList.pop();
+			var selectionParamList = MySelection.split("_")[0];
+			gameValue = gameValueList.join(",");
+            targetObject.setAttribute("gameValue", gameValue);
+			if (gameValueList.length == 0) {
+				targetObject.innerHTML = "";
+				targetObject.setAttribute("bgcolor", "White");
+			} else {
+				gameValueParamList = gameValueList[gameValueList.length-1].split("_");
+				targetObject.innerHTML = gameValueParamList[1];
+				targetObject.setAttribute("bgcolor", gameValueParamList[0] == "R" ? "Salmon" : "SkyBlue");
+			}
+			targetObject.setAttribute("gameValue", gameValue);
+            //PrintLog("Info : gameValue for cell is now " + gameValue);
+		}
+	
+		function MakeSecondCellMove(targetObject) {
+			var gameValue = targetObject.getAttribute("gameValue");
+			var selectionParamList = MySelection.split("_");
+			if (gameValue == "") {
+				gameValue = MySelection;
+				targetObject.innerHTML = selectionParamList[1];
+				targetObject.setAttribute("bgcolor", selectionParamList[0] == "R" ? "Salmon" : "SkyBlue");
+				targetObject.setAttribute("gameValue", gameValue);
+				MySelection = null;
+				return;
+			} else {
+				gameValueList = gameValue.split(",");
+				gameValueParamList = gameValueList[gameValueList.length-1].split("_");
+				if (selectionParamList[1] <= gameValueParamList[1]) {
+					PrintLog("WARN : Move not valid");
+					return;
+				}
+				gameValue = gameValue + "," + MySelection;
+				targetObject.innerHTML = selectionParamList[1];
+				targetObject.setAttribute("bgcolor", selectionParamList[0] == "R" ? "Salmon" : "SkyBlue");
+				targetObject.setAttribute("gameValue", gameValue);
+				MySelection = null;
+				return;
+			}
+		}
+		
+		function CellClick(eventObject) {
+			var targetObject = eventObject.target || eventObject.srcElement;
+			var gameValue = targetObject.getAttribute("gameValue");
+
+			
+			if (MySelection == null) {
+				// This is 1st selection
+				if (gameValue == "") {
+					// There is nothing in this cell
+					PrintLog("WARN : Move not valid");
+					return;
+				}	
+			}
+			
+			if (MySelection == null) {
+				MakeFirstCellMove(targetObject);
+			} else {
+				MakeSecondCellMove(targetObject);
+				console.log(CheckForGameEnd());
+			}
+		}
+        		
+		var playButtonElementList = document.getElementsByClassName("playButton");
+		for (var i=0; i<playButtonElementList.length; i++) {
+			playButtonElementList[i].addEventListener('click', ButtonClick);
+		}
+
+		var playCellElementList = document.getElementsByClassName("playTD");
+		for (var i=0; i<playCellElementList.length; i++) {
+			playCellElementList[i].addEventListener('click', CellClick);
+		}
 
     </script>
 </html>
