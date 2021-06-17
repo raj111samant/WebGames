@@ -4,22 +4,298 @@
     <meta charset="utf-8">
     <title>Gobblet Gobblers Client</title>
     <style>
-
+	html, body {height:100%}
+        button.redButton{background-color:Salmon;}
+        button.blueButton{background-color:SkyBlue;}
+	button.playButton{height:100%; width:30%;font-size:40px}
+	button.playButton:hover{cursor:pointer;}
+	td.playTD{width:10%;height:10%;font-size:40px}
+	td.playTD:hover{cursor:pointer;}
+	tr {width:10%;height:10%;}
+	div.centerDiv{text-align:center;height:10%;}
+	div.centerDivTable{text-align:center;height:50%;}
+	table.centerTable{margin-left:auto;margin-right:auto;width:80%;height:100%;}
     </style>    
 </head>
 <body>
+    <div class="centerDiv">
+    <button type="button" id="redButton1" class="redButton playButton" gameValue="R_A,R_A" disabled>A x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="redButton2" class="redButton playButton" gameValue="R_B,R_B" disabled>B x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="redButton3" class="redButton playButton" gameValue="R_C,R_C" disabled>C x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    </div>
+    <br>
+	<div class="centerDivTable">
+	<table border = "1" class="centerTable">
+	    <tr>
+                <td id="cell11" class="playTD" gameValue=""></td>
+                <td id="cell12" class="playTD" gameValue=""></td>
+                <td id="cell13" class="playTD" gameValue=""></td>
+            </tr>
+            <tr>
+                <td id="cell21" class="playTD" gameValue=""></td>
+                <td id="cell22" class="playTD" gameValue=""></td>
+                <td id="cell23" class="playTD" gameValue=""></td>
+            </tr>
+            <tr>
+                <td id="cell31" class="playTD" gameValue=""></td>
+                <td id="cell32" class="playTD" gameValue=""></td>
+                <td id="cell33" class="playTD" gameValue=""></td>
+            </tr>
+	</table>
+	</div>
+	<br>
+    <div  class="centerDiv">
+    <button type="button" id="blueButton1" class="blueButton playButton" gameValue="B_A,B_A">A x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="blueButton2" class="blueButton playButton" gameValue="B_B,B_B">B x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    <button type="button" id="blueButton3" class="blueButton playButton" gameValue="B_C,B_C">C x 2</button>
+    &nbsp;&nbsp;&nbsp;
+    </div>
+    <hr>
     <div id="debugText">
         Waiting for Conection
     </div>
 </body>
 	<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script>
+    // Game engine code starts here
+    var MyColor = "B";
+    var MySelection = null;
+    var TurnColor = "W";
+
+    function PrintTurn() {
+        if (TurnColor == MyColor) {
+            PrintLog("INFO : YOUR TURN");
+        } else {
+            PrintLog("INFO : OPPONENT TURN");
+        }
+    }
+
+    function PrintLog(str) {
+        document.getElementById('debugText').innerHTML = "Debug : " + str;
+        console.log(str);
+        setTimeout(function(){
+            document.getElementById('debugText').innerHTML = ""
+        }, 3000);
+    }
+
+    function CheckForGameEnd() {
+        var statusMatrix = new Array(3); // create an empty array of length n
+        for (var i=0;i<3;i++) {
+            statusMatrix[i] = new Array(3); // make each element an array
+        }
+        var playCellElementList = document.getElementsByClassName("playTD");
+        for (var i=0; i<playCellElementList.length; i++) {
+            playCellElementList[i].addEventListener('click', CellClick);
+        }
+        
+        var k=0;
+        var gameValue;
+        var gameValueList;
+        var gameValueParamList;
+        for (var i=0; i<3; i++) {
+            for (var j=0; j<3; j++) {
+                gameValue = playCellElementList[k].getAttribute("gameValue");
+                gameValueList = gameValue.split(",");
+                gameValueParamList = gameValueList[gameValueList.length-1].split("_");
+                statusMatrix[i][j] = gameValueParamList[0];
+                k++;
+            }
+        }
+        
+        for (var i=0; i<3; i++) {
+            
+            if ((statusMatrix[0][i] != "") && (statusMatrix[0][i] == statusMatrix[1][i]) && (statusMatrix[1][i] == statusMatrix[2][i])) {
+                PrintLog("INFO: " + i + " col match");
+                return statusMatrix[0][i];
+            }
+            if ((statusMatrix[i][0] != "") && (statusMatrix[i][0] == statusMatrix[i][1]) && (statusMatrix[i][1] == statusMatrix[i][2])) {
+                PrintLog("INFO: " + i + " row match");
+                return statusMatrix[i][0];
+            }
+        }
+        if ((statusMatrix[1][1] != "") && (statusMatrix[0][0] == statusMatrix[1][1]) && (statusMatrix[1][1] == statusMatrix[2][2])) {
+            PrintLog("INFO: diagonal match");
+            return statusMatrix[0][0];
+        }
+
+        if ((statusMatrix[1][1] != "") && (statusMatrix[2][0] == statusMatrix[1][1]) && (statusMatrix[1][1] == statusMatrix[0][2])) {
+            PrintLog("INFO: Non diagonal match");
+            return statusMatrix[2][0];
+        }
+        
+        return "";
+    }
+
+        function ButtonClick(eventObject) {
+            var targetObject = eventObject.target || eventObject.srcElement;
+            var gameValue = targetObject.getAttribute("gameValue");
+            var gameValueList = gameValue.split(",");
+
+	    if (TurnColor != MyColor) {
+                PrintLog("WARN : NOT YOUR TURN");
+                return;
+	    }
+
+            if (MySelection == null) {
+                // This is 1st selection
+                if (gameValueList.length == 0) {
+                    // There is no value left
+                    PrintLog("WARN : Move not valid");
+                    return;
+                }
+            } else {
+                // This is 2nd selection
+                PrintLog("WARN : Second selection cannot be button, Move not valid");
+                return;
+            }
+            
+            MySelection = gameValueList.pop();
+            var color = MySelection.split("_")[0];
+            var value = MySelection.split("_")[1];
+            gameValue = gameValueList.join(",");
+            targetObject.setAttribute("gameValue", gameValue);
+            targetObject.innerHTML = value + " x " + gameValueList.length;
+            targetObject.disabled = gameValueList.length == 0;
+            //PrintLog("Info : gameValue for button is now " + gameValue);
+        }
+
+        function MakeFirstCellMove(targetObject) {
+            var gameValue = targetObject.getAttribute("gameValue");
+            var gameValueList = gameValue.split(",");
+            MySelection = gameValueList.pop();
+            var selectionParamList = MySelection.split("_")[0];
+            gameValue = gameValueList.join(",");
+            targetObject.setAttribute("gameValue", gameValue);
+            if (gameValueList.length == 0) {
+                targetObject.innerHTML = "";
+                targetObject.setAttribute("bgcolor", "White");
+            } else {
+                gameValueParamList = gameValueList[gameValueList.length-1].split("_");
+                targetObject.innerHTML = gameValueParamList[1];
+                targetObject.setAttribute("bgcolor", gameValueParamList[0] == "R" ? "Salmon" : "SkyBlue");
+            }
+            targetObject.setAttribute("gameValue", gameValue);
+            //PrintLog("Info : gameValue for cell is now " + gameValue);
+        }
+    
+        function MakeSecondCellMove(targetObject) {
+            var gameValue = targetObject.getAttribute("gameValue");
+            var selectionParamList = MySelection.split("_");
+            if (gameValue == "") {
+                gameValue = MySelection;
+                targetObject.innerHTML = selectionParamList[1];
+                targetObject.setAttribute("bgcolor", selectionParamList[0] == "R" ? "Salmon" : "SkyBlue");
+                targetObject.setAttribute("gameValue", gameValue);
+                MySelection = null;
+                return;
+            } else {
+                gameValueList = gameValue.split(",");
+                gameValueParamList = gameValueList[gameValueList.length-1].split("_");
+                if (selectionParamList[1] <= gameValueParamList[1]) {
+                    PrintLog("WARN : Move not valid");
+                    return;
+                }
+                gameValue = gameValue + "," + MySelection;
+                targetObject.innerHTML = selectionParamList[1];
+                targetObject.setAttribute("bgcolor", selectionParamList[0] == "R" ? "Salmon" : "SkyBlue");
+                targetObject.setAttribute("gameValue", gameValue);
+                MySelection = null;
+                return;
+            }
+        }
+        
+        function CellClick(eventObject) {
+            var targetObject = eventObject.target || eventObject.srcElement;
+            var gameValue = targetObject.getAttribute("gameValue");
+
+	    if (TurnColor != MyColor) {
+                PrintLog("WARN : NOT YOUR TURN");
+                return;
+	    }
+
+            if (MySelection == null) {
+                // This is 1st selection
+                if (gameValue == "") {
+                    // There is nothing in this cell
+                    PrintLog("WARN : Move not valid");
+                    return;
+                }    
+            }
+            
+            if (MySelection == null) {
+                MakeFirstCellMove(targetObject);
+            } else {
+                MakeSecondCellMove(targetObject);
+                console.log(CheckForGameEnd());
+                TurnColor = "R";
+                SendGameData();
+            }
+        }
+                
+    var playButtonElementList = document.getElementsByClassName("playButton");
+    for (var i=0; i<playButtonElementList.length; i++) {
+        playButtonElementList[i].addEventListener('click', ButtonClick);
+    }
+
+    var playCellElementList = document.getElementsByClassName("playTD");
+    for (var i=0; i<playCellElementList.length; i++) {
+        playCellElementList[i].addEventListener('click', CellClick);
+    }
+
+    function EncodeGame() {
+        var data = {};
+        var playButtonElementList = document.getElementsByClassName("playButton");
+        for (var i=0; i<playButtonElementList.length; i++) {
+	    domElement = playButtonElementList[i];
+	    data[domElement.id] = {};
+	    data[domElement.id]["gameValue"] = domElement.getAttribute("gameValue");
+	    data[domElement.id]["innerHTML"] = domElement.innerHTML;
+	    data[domElement.id]["id"] = domElement.id;
+        }
+
+        var playCellElementList = document.getElementsByClassName("playTD");
+        for (var i=0; i<playCellElementList.length; i++) {
+            domElement = playCellElementList[i];
+       	    data[domElement.id] = {};
+	    data[domElement.id]["gameValue"] = domElement.getAttribute("gameValue");
+	    data[domElement.id]["innerHTML"] = domElement.innerHTML;
+	    data[domElement.id]["id"] = domElement.id;
+        }
+	return data;
+    }
+
+    function DecodeGame(data) {
+        for (var key in data) {
+            //console.log(data[key]);
+            var domElement = document.getElementById(data[key]["id"]);
+            domElement.innerHTML = data[key]["innerHTML"];
+            domElement.setAttribute("gameValue", data[key]["gameValue"]);
+            var gameValue = data[key]["gameValue"];
+            if (domElement.tagName == "TD") {
+                if (gameValue == "") {
+                    domElement.setAttribute("bgcolor", "White");
+                } else {
+                    var gameValueList = gameValue.split(",");
+                    var gameValueParamList = gameValueList[gameValueList.length-1].split("_");
+                    domElement.setAttribute("bgcolor", gameValueParamList[0] == "R" ? "Salmon" : "SkyBlue");
+                }
+            }
+        }
+    }
+
+
+
+    // Communication code starts here
 		var peer = null;
 		var conn = null;
 	
 		function PrintLog(str) {
             document.getElementById('debugText').innerHTML = "Debug : " + str;
-            console.log(str);
             setTimeout(function(){
                 document.getElementById('debugText').innerHTML = ""
             }, 3000);
@@ -41,7 +317,6 @@
 			// Create connection to destination peer specified in the input field
 			conn = peer.connect("RNS111", {reliable: true});
 			InitializeConnection();
-			conn.send("Hi from client");
 			console.log(conn);
         });
 			
@@ -84,20 +359,40 @@
 			conn.on('open', function () {
 				PrintLog("Connected to: " + conn.peer);
 				console.log("Connected to: " + conn.peer);
-				conn.send("Hi from client");
+				var msg = {};
+				msg["title"] = "Start";
+				setTimeout(function () {conn.send(msg)}, 2000);
 			});
 			
 			// Handle incoming data (messages only since this is the signal sender)
 			conn.on('data', function (data) {
+			        console.log("got data " + data);
 				PrintLog(data);
+			    if (data["title"] == "GameValue") {
+				console.log(data["data"]);
+				DecodeGame(data["data"])
+				TurnColor = data["turn"];
+                                PrintTurn();
+
+			    } else {
+
+			    }
 			});
 			
 			conn.on('close', function () {
-				PrintLo("Connection closed");
+				PrintLog("Connection closed");
 			});
 			
-			console.log(conn.open);
-			conn.send("Hello World");
 		}
+
+    function SendGameData() {
+        data = EncodeGame();
+        var msg = {};
+        msg["title"] = "GameValue";
+        msg["turn"] = TurnColor;
+        msg["data"] = data;
+        conn.send(msg);
+        PrintTurn();
+    }
     </script>
 </html>
