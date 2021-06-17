@@ -18,7 +18,6 @@
     </style>    
 </head>
 <body>
-    <br>
     <div class="centerDiv">
         <button type="button" id="redButton1" class="redButton playButton" gameValue="R_A,R_A">A x 2</button>
         &nbsp;&nbsp;&nbsp;
@@ -60,6 +59,9 @@
     <div id="debugText">
         Waiting for Conection
     </div>
+    <div id="resultText">
+        
+    </div>
 </body>
 <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 <script>
@@ -83,6 +85,12 @@
             document.getElementById('debugText').innerHTML = ""
         }, 3000);
     }
+
+    function PrintResult(str) {
+        document.getElementById('resultText').innerHTML = "Debug : " + str;
+        console.log(str);
+    }
+
 
     function CheckForGameEnd() {
         var statusMatrix = new Array(3); // create an empty array of length n
@@ -193,20 +201,20 @@
                 targetObject.setAttribute("bgcolor", selectionParamList[0] == "R" ? "Salmon" : "SkyBlue");
                 targetObject.setAttribute("gameValue", gameValue);
                 MySelection = null;
-                return;
+                return 1;
             } else {
                 gameValueList = gameValue.split(",");
                 gameValueParamList = gameValueList[gameValueList.length-1].split("_");
                 if (selectionParamList[1] <= gameValueParamList[1]) {
                     PrintLog("WARN : Move not valid");
-                    return;
+                    return 0;
                 }
                 gameValue = gameValue + "," + MySelection;
                 targetObject.innerHTML = selectionParamList[1];
                 targetObject.setAttribute("bgcolor", selectionParamList[0] == "R" ? "Salmon" : "SkyBlue");
                 targetObject.setAttribute("gameValue", gameValue);
                 MySelection = null;
-                return;
+                return 1;
             }
         }
         
@@ -239,10 +247,15 @@
             if (MySelection == null) {
                 MakeFirstCellMove(targetObject);
             } else {
-                MakeSecondCellMove(targetObject);
-                console.log(CheckForGameEnd());
-                TurnColor = "B";
-                SendGameData();
+                var retVal = MakeSecondCellMove(targetObject);
+		if (retVal == 1) {
+                    TurnColor = "B";
+		    retVal = CheckForGameEnd();
+                    SendGameData();
+		    if (retVal != "") {
+		        PrintResult((retVal==MyColor)?"INFO : WINNER You":" INFO : WINNER Opponent");
+		    }
+		}
             }
         }
                 
@@ -371,17 +384,15 @@
 	        console.log("got data");
 	        console.log(data);
 	        if (data["title"] == "Start") {
-                    data = EncodeGame();
-		    var msg = {};
-		    msg["title"] = "GameValue";
-		    msg["turn"] = TurnColor;
-		    msg["data"] = data;
-		    conn.send(msg);
-		    PrintTurn();
+		    SendGameData();
 		} else if (data["title"] == "GameValue") {
                     DecodeGame(data["data"])
                     TurnColor = data["turn"];
-                    PrintTurn();
+		    if (data["result"] != "") {
+		        PrintResult((data["result"]==MyColor)?"INFO : WINNER You":" INFO : WINNER Opponent");
+		    } else {
+		        PrintTurn();
+		    }
 		}
             });
             
@@ -396,6 +407,7 @@
         msg["title"] = "GameValue";
         msg["turn"] = TurnColor;
         msg["data"] = data;
+	msg["result"] = CheckForGameEnd();
         conn.send(msg);
         PrintTurn();
     }
